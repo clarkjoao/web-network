@@ -54,7 +54,7 @@ export default function MyNetworkSettings({
   const { state, dispatch } = useAppState();
 
   const { colorsToCSS } = useNetworkTheme();
-  const { updateNetwork } = useApi();
+  const { updateNetwork, processEvent } = useApi();
   const { handleChangeNetworkParameter } = useBepro();
 
   const { updateActiveNetwork } = useNetwork();
@@ -181,12 +181,19 @@ export default function MyNetworkSettings({
           console.error(failed);
         }
 
-        if (success.length)
-          dispatch(toastSuccess(t("custom-network:messages.updated-parameters", {
-                updated: success.length,
-                total: promises.length,
+        if (success.length){
+          dispatch(toastSuccess(t("custom-network:messages.updated-parameters", { 
+            updated: success.length, 
+            total: promises.length 
           })));
-
+          
+          if(draftTime !== forcedNetwork.draftTime)
+            Promise.all([
+              await processEvent("bounty","update-draft-time", network.name),
+              await processEvent("bounty","moved-to-open", network.name)
+            ])
+        }
+          
         if (isCurrentNetwork) updateActiveNetwork(true);
 
         return updateEditingNetwork();
